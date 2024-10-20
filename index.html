@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battleship Game</title>
+  <style>
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      width: 30px;
+      height: 30px;
+      border: 1px solid black;
+      text-align: center;
+    }
+    .hit {
+      background-color: red;
+    }
+    .miss {
+      background-color: lightblue;
+    }
+    .ship {
+      background-color: grey;
+    }
+    .blocked {
+      background-color: lightgray;
+    }
+    .gap {
+      display: flex;
+      gap: 80px;
+      justify-content: center;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Battleship Game</h1>
+
+  <div class="game">
+    <div class="gap">
+      <div>
+        <h2>Player 1</h2>
+        <table id="player1-board">
+          <!-- Таблиця для гравця 1 -->
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </table>
+      </div>
+      
+      <div>
+        <h2>Player 2</h2>
+        <table id="player2-board">
+          <!-- Таблиця для гравця 2 -->
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const player1Grid = document.getElementById('player1-board');
+    const player2Grid = document.getElementById('player2-board');
+    let currentPlayer = 1;
+    const ws = new WebSocket('ws://localhost:8080'); 
+
+    ws.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      const { gridId, row, col, result } = data;
+
+      const grid = gridId === 'player1' ? player1Grid : player2Grid;
+      const cell = grid.rows[row].cells[col];
+
+      if (result === 'hit') {
+        cell.classList.add('hit');
+      } else if (result === 'miss') {
+        cell.classList.add('miss');
+      }
+    };
+
+    function sendMove(gridId, row, col, result) {
+      ws.send(JSON.stringify({ gridId, row, col, result }));
+    }
+
+    player2Grid.addEventListener('click', function(event) {
+      if (currentPlayer !== 1) return;
+      if (event.target.tagName === 'TD') {
+        const cell = event.target;
+        const row = cell.parentElement.rowIndex;
+        const col = cell.cellIndex;
+        if (cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+
+        let result;
+        if (cell.classList.contains('ship')) {
+          cell.classList.add('hit');
+          result = 'hit';
+        } else {
+          cell.classList.add('miss');
+          result = 'miss';
+        }
+
+        sendMove('player2', row, col, result);
+        currentPlayer = 2; 
+      }
+    });
+  </script>
+</body>
+</html>
